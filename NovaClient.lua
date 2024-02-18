@@ -15,13 +15,13 @@ local toggleColor = Color3.fromRGB(114, 137, 218)
 local humanoidRootPart = Char:FindFirstChild("HumanoidRootPart")
 local TWS = game:GetService("TweenService")
 local sky = Instance.new("Sky")
-local VelocityMode = false --\\This is more for antivoid
+local VelocityMode = true --\\This is more for antivoid
 local Teams = game:GetService("Teams")
+local CoreGui = game:GetService("CoreGui")
 
 
 local NovaWare = Instance.new("ScreenGui")
-NovaWare.Parent = game:GetService("CoreGui")
-
+NovaWare.Parent = CoreGui
 
 local function MakeDraggable(frame)--\\Probably Should Just Used .Draggable
     local dragging
@@ -186,37 +186,46 @@ local function CreateToggle(options)
     end
 end
 
-local function CreateTabToggle(Params)
-local NovaWare2 = Instance.new("ScreenGui")
-NovaWare2.Parent = game:GetService("CoreGui")
 
-local TabToggle = Instance.new("TextButton")
-TabToggle.Size = UDim2.new(0, 50, 0, 50)
-TabToggle.Position = UDim2.new(1, -60, 0.5, -25) 
-TabToggle.AnchorPoint = Vector2.new(1, 0.5) 
-TabToggle.Text = "NV"
-TabToggle.Font = Enum.Font.SourceSansBold
-TabToggle.FontSize = Enum.FontSize.Size14
-TabToggle.TextColor3 = Color3.new(1, 1, 1)
-TabToggle.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
-TabToggle.TextSize = 25
-TabToggle.BorderSizePixel = 0
-TabToggle.AutoButtonColor = false
-TabToggle.Active = true
-TabToggle.Draggable = true
-TabToggle.Parent = NovaWare2
-
-local uiCorners = Instance.new("UICorner")
-uiCorners.CornerRadius = UDim.new(0.1, 0)
-uiCorners.Parent = TabToggle
-
-local Hash = false
-TabToggle.MouseButton1Click:Connect(function()  
-NovaWare.Visible = not Hash
-end)
-
-
+local function CreateTabToggle()
+    local isVisible = false
+    
+    local tabToggle = Instance.new("TextButton")
+    tabToggle.Size = UDim2.new(0, 50, 0, 50)
+    tabToggle.Position = UDim2.new(1, -60, 0.5, -25) 
+    tabToggle.AnchorPoint = Vector2.new(1, 0.5) 
+    tabToggle.Text = "NV"
+    tabToggle.Font = Enum.Font.SourceSansBold
+    tabToggle.FontSize = Enum.FontSize.Size14
+    tabToggle.TextColor3 = Color3.new(1, 1, 1)
+    tabToggle.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
+    tabToggle.TextSize = 25
+    tabToggle.BorderSizePixel = 0
+    tabToggle.AutoButtonColor = false
+    tabToggle.Active = true
+    tabToggle.Draggable = true
+    tabToggle.Parent = NovaWare
+    
+    local uiCorners = Instance.new("UICorner")
+    uiCorners.CornerRadius = UDim.new(0.1, 0)
+    uiCorners.Parent = tabToggle
+    
+    local function toggleTabs()
+        isVisible = not isVisible
+        for _, tab in ipairs(NovaWare:GetChildren()) do
+            if tab:IsA("Frame") then
+                tab.Visible = isVisible
+            end
+        end
+    end
+    
+    tabToggle.MouseButton1Click:Connect(toggleTabs)
 end
+
+local TabToggle = CreateTabToggle()
+
+
+
 --\\Code Very Gud Organized ( prob ), You Can Use This Lib If U Want
 
 local function GetInventory(Player)
@@ -320,7 +329,7 @@ local WorldTab = CreateTab({
 })
 
 
-
+  
 
 local AntivoidEnabled = false
 local Antivoid = CreateToggle({
@@ -357,12 +366,6 @@ local Antivoid = CreateToggle({
   SaveToFile = "Settings.json",
   LoadFromFile = "Settings.json"
 })
-
-
-
-
-
-
 
 
 
@@ -442,6 +445,58 @@ local Esp = CreateToggle({
 })
 
 
+local NameTags = CreateToggle({
+    Name = "NameTags",
+    Column = 2,
+    Parent = VisualsTab,
+    Callback = function(isToggled)
+        local function CreateNameTag(player)
+            local Tag = Instance.new("BillboardGui")
+            Tag.Adornee = player.Character:FindFirstChild("Head") or player.Character.PrimaryPart 
+            Tag.Size = UDim2.new(0, 100, 0, 50)
+            Tag.StudsOffset = Vector3.new(0, 3, 0)
+            Tag.Name = player.Name .. "NameTag"
+            local TextLabel = Instance.new("TextLabel")
+            TextLabel.Parent = Tag
+            TextLabel.Size = UDim2.new(1, 0, 1, 0)
+            TextLabel.BackgroundTransparency = 1
+            TextLabel.Text = player.Name
+            TextLabel.Font = Enum.Font.SourceSansBold
+            TextLabel.TextColor3 = Color3.new(1, 1, 1) -- Corrected line
+            TextLabel.TextStrokeTransparency = 0
+            TextLabel.TextStrokeColor3 = Color3.new(0, 0, 0) 
+            TextLabel.TextScaled = true
+            
+            Tag.Parent = game.Workspace 
+        end
+        
+        local function DestroyNameTag(player)
+            local Tag = game.Workspace:FindFirstChild(player.Name .. "NameTag")
+            if Tag then
+                Tag:Destroy()
+            end
+        end
+        
+        local function ToggleNameTags(isToggled)
+            local Lplr = game.Players.LocalPlayer
+            if isToggled then
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    if player ~= Lplr then
+                        CreateNameTag(player)
+                    end
+                end
+            else
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    DestroyNameTag(player)
+                end
+            end
+        end
+        
+        ToggleNameTags(isToggled)
+    end,
+    SaveToFile = "Settings.json",
+    LoadFromFile = "Settings.json"
+})
 
 
 
@@ -774,4 +829,3 @@ end)
 
 
 
- 
