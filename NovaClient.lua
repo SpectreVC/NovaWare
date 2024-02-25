@@ -2,11 +2,13 @@
 local Lplr = game.Players.LocalPlayer
 local Char = Lplr.Character 
 local Hum = Char.Humanoid
+local LplrTeam = Lplr.Team 
 local Camera = workspace.CurrentCamera
 local KnitClient = debug.getupvalue(require(Lplr.PlayerScripts.TS.knit).setup, 6)
 local CombatConstants = require(game:GetService("ReplicatedStorage").TS.combat["combat-constant"]).CombatConstant
 local BedwarsSwords = require(game:GetService("ReplicatedStorage").TS.games.bedwars["bedwars-swords"]).BedwarsMelees
 local Players = game:GetService("Players")
+local LookVector = Lplr.character.HumanoidRootPart.CFrame.lookVector
 local ClientHandlerStore = require(Lplr.PlayerScripts.TS.ui.store).ClientStore
 local SwordController = KnitClient.Controllers.SwordController
 local RS = game:GetService("RunService")
@@ -15,13 +17,18 @@ local toggleColor = Color3.fromRGB(114, 137, 218)
 local humanoidRootPart = Char:FindFirstChild("HumanoidRootPart")
 local TWS = game:GetService("TweenService")
 local sky = Instance.new("Sky")
-local VelocityMode = true --\\This is more for antivoid
+local VelocityMode = false --\\This is more for antivoid
 local Teams = game:GetService("Teams")
 local CoreGui = game:GetService("CoreGui")
+local hasTeleported = false
 
 
 local NovaWare = Instance.new("ScreenGui")
 NovaWare.Parent = CoreGui
+
+
+local NovaWare2 = Instance.new("ScreenGui")
+NovaWare2.Parent = CoreGui
 
 local function MakeDraggable(frame)--\\Probably Should Just Used .Draggable
     local dragging
@@ -49,6 +56,110 @@ local function MakeDraggable(frame)--\\Probably Should Just Used .Draggable
         end
     end)
 end
+
+
+
+--\\Top Ten Best CustomNotification :)
+local function CreateNotification(options)
+    local NotificationBackground = Instance.new("Frame")
+    NotificationBackground.Size = UDim2.new(0.7, 0, 0.17, 0)
+    NotificationBackground.Position = UDim2.new(0, 780, 0, 1000) 
+    NotificationBackground.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+    NotificationBackground.Parent = NovaWare2
+
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 6)
+    uiCorner.Parent = NotificationBackground
+
+    local uiStroke = Instance.new("UIStroke")--\\Top Ten Best Strokes
+    uiStroke.Thickness = 2
+    if options.Mode == "Normal" then
+        uiStroke.Color = Color3.fromRGB(173, 216, 230) 
+    elseif options.Mode == "Error" then
+        uiStroke.Color = Color3.new(1, 0, 0) 
+    elseif options.Mode == "Warning" then
+        uiStroke.Color = Color3.fromRGB(255, 165, 0) 
+    end
+    uiStroke.Parent = NotificationBackground
+
+--[[
+if options.MyAss then
+uiStroke.Color = Color3.fromRGB(139, 69, 19)
+end
+
+trol:3
+
+]]
+
+    local waterMark = Instance.new("TextLabel")
+    waterMark.Text = "NV"
+    waterMark.Size = UDim2.new(0, 0, 0, 20)
+    waterMark.Position = UDim2.new(0.02, 0, 0.02, 0)
+    waterMark.TextColor3 = Color3.new(1, 1, 1)
+    waterMark.BackgroundTransparency = 1
+    waterMark.Font = Enum.Font.SourceSansBold
+    waterMark.TextSize = 17
+    waterMark.Parent = NotificationBackground
+
+    local Message = Instance.new("TextLabel")
+    Message.Text = options.Text or "Error"
+    Message.Size = UDim2.new(0, 20, 0, 20)
+    Message.Position = options.TextPos or UDim2.new(0, 80, 0, 30)--\\ in case youre wondering why theres TextPos, well the text dosent fit to good:/
+    Message.TextColor3 = Color3.new(1, 1, 1)
+    Message.BackgroundTransparency = 1
+    Message.Font = Enum.Font.SourceSansBold
+    Message.TextSize = 20
+    Message.Parent = NotificationBackground
+
+    local timerBar = Instance.new("Frame")
+    timerBar.Size = UDim2.new(0, 2, 1, 0)
+    timerBar.Position = UDim2.new(0, 288, 0, 0)
+    timerBar.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+    timerBar.BorderSizePixel = 0
+    timerBar.Parent = NotificationBackground
+
+    local endPosition = UDim2.new(0, 780, 0, 290)
+
+    local EntranceInfo = TweenInfo.new(
+        1, 
+        Enum.EasingStyle.Quad,
+        Enum.EasingDirection.Out, 
+        0, 
+        false, 
+        0 
+    )--\\Idk why honestly external made it look like this but ok
+
+    local Entrance = TWS:Create(NotificationBackground, EntranceInfo, {Position = endPosition})
+
+    Entrance:Play()
+
+    Entrance.Completed:Connect(function()
+        local countdownDuration = options.Time or 4
+
+        local countdownTweenInfo = TweenInfo.new(countdownDuration, Enum.EasingStyle.Linear)
+        local countdownTween = TWS:Create(timerBar, countdownTweenInfo, {Size = UDim2.new(0, 2, 0, 0)})
+
+        countdownTween:Play()
+
+        countdownTween.Completed:Connect(function()
+            local ExitInfo = TweenInfo.new(
+                1, 
+                Enum.EasingStyle.Quad, 
+                Enum.EasingDirection.Out, 
+                0, 
+                false, 
+                0 
+            )--\\Same here bru
+
+            local Exit = TWS:Create(NotificationBackground, ExitInfo, {Position = UDim2.new(1, 0, 0, 290)})
+
+            Exit:Play()
+        end)
+    end)
+
+    return NotificationBackground
+end
+
 
 
 local function CreateTab(options)
@@ -218,12 +329,63 @@ local function CreateTabToggle()
             end
         end
     end
-    
     tabToggle.MouseButton1Click:Connect(toggleTabs)
+end
+
+local function CreateButton(options)
+    local column = options.Column or 1
+    local yOffset = 0
+    
+    if options.Parent then
+        yOffset = options.Parent.Size.Y.Offset 
+        for _, child in ipairs(options.Parent:GetChildren()) do
+            if child:IsA("TextButton") then
+                yOffset = yOffset + child.Size.Y.Offset
+            end
+        end
+    end
+    
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, 0, 0, 30)
+    Button.Position = UDim2.new(0, 0, 1, yOffset) 
+    Button.Text = ""
+    Button.BackgroundColor3 = options.Color or defaultColor
+    Button.BorderSizePixel = 0
+    Button.AutoButtonColor = false
+    Button.Font = Enum.Font.SourceSansBold
+    Button.TextSize = 0
+    Button.TextColor3 = Color3.new(1, 1, 1)
+    Button.TextXAlignment = Enum.TextXAlignment.Left
+    Button.Parent = options.Parent or frame
+    
+    local ButtonText = Instance.new("TextLabel")
+    ButtonText.Size = UDim2.new(1, 0, 1, 0)
+    ButtonText.Position = UDim2.new(0, 5, 0, 0) 
+    ButtonText.BackgroundTransparency = 1
+    ButtonText.Text = options.Name or "Button"
+    ButtonText.TextColor3 = Color3.new(1, 1, 1)
+    ButtonText.Font = Enum.Font.SourceSansBold
+    ButtonText.TextSize = 17
+    ButtonText.TextXAlignment = Enum.TextXAlignment.Left
+    ButtonText.Parent = Button
+    
+    Button.MouseButton1Click:Connect(function()
+        if options.Callback then
+            options.Callback()
+        end
+    end)
+    
+    return Button
 end
 
 local TabToggle = CreateTabToggle()
 
+local WelcomeNotification = CreateNotification({
+    Text = "NovaWare Loaded!",
+    TextPos = UDim2.new(0, 80, 0, 30),
+    Time = 2.5,
+    Mode = "Normal"
+})
 
 
 --\\Code Very Gud Organized ( prob ), You Can Use This Lib If U Want
@@ -257,15 +419,93 @@ local function GetInventory(Player)
 	return Return
 end
 
+
+
+local Remotes = {
+  DeathRemote = game:GetService("ReplicatedStorage").rbxts_include.node_modules:FindFirstChild("@rbxts").net.out._NetManaged.ResetCharacter
+  
+}
+
+
+
+
+function FindBed()
+    local nearestBed = nil
+    local minDistance = math.huge
+
+    for _, v in pairs(game.Workspace:GetDescendants()) do
+        if v.Name:lower() == "bed" and v:FindFirstChild("Covers") and v:FindFirstChild("Covers").BrickColor ~= Lplr.Team.TeamColor then
+            local distance = (v.Position - Lplr.Character.HumanoidRootPart.Position).magnitude
+            if distance < minDistance then
+                nearestBed = v
+                minDistance = distance
+            end
+        end
+    end
+    return nearestBed
+end
+
+function TpToBed()
+    local nearestBed = FindBed()
+    if nearestBed and not hasTeleported then
+        hasTeleported = true
+
+        local humanoidRootPart = Lplr.Character:FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart then
+            local targetCFrame = nearestBed.CFrame + Vector3.new(0, 6, 0)
+            local tweenInfo = TweenInfo.new(0.8)
+            local tween = TWS:Create(humanoidRootPart, tweenInfo, {CFrame = targetCFrame})
+            tween:Play()
+        end
+    end
+end
+
+
+
+
 function HashFunc(Vec)
 	return {value = Vec}
 end
+
+local function FindPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Lplr and player.TeamColor ~= LplrTeam.TeamColor then
+            local distance = (player.Character.HumanoidRootPart.Position - Lplr.Character.HumanoidRootPart.Position).magnitude
+            if distance < shortestDistance then
+                closestPlayer = player
+                shortestDistance = distance
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+local function KillPlayer()
+if not IsPlayerAlive(Lplr) then
+    CreateNotification({
+    Text = "Use The Module When You're Alive!",
+    TextPos = UDim2.new(0, 140, 0, 30),
+    Time = 2.5,
+    Mode = "Error"
+})
+else
+Remotes.DeathRemote:FireServer()
+end
+end
+
+
+
+
 
 function GetSword()
 	local Highest, Returning = -9e9, nil
 	for i, v in next, GetInventory(Lplr).items do 
 		local Power = table.find(BedwarsSwords, v.itemType)
-		if not Power then continue end 
+		if not Power then continue end
 		if Power > Highest then 
 			Returning = v
 			Highest = Power
@@ -273,6 +513,64 @@ function GetSword()
 	end
 	return Returning
 end
+
+local function FindPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Lplr and player.TeamColor.Name ~= LplrTeam then
+            local distance = (player.Character.HumanoidRootPart.Position - Lplr.Character.HumanoidRootPart.Position).magnitude
+            if distance < shortestDistance then
+                closestPlayer = player
+                shortestDistance = distance
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+function TpToPlayer()
+    local closestPlayer = FindPlayer()
+    if closestPlayer then
+        local humanoidRootPart = Lplr.Character:FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart then
+            local targetCFrame = closestPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame
+            local tweenInfo = TweenInfo.new(0.8)
+            local tween = TWS:Create(humanoidRootPart, tweenInfo, {CFrame = targetCFrame})
+            tween:Play()
+        end
+    end
+end
+
+function YuziTp()
+    local closestPlayer = FindPlayer()
+    if closestPlayer then
+        local humanoidRootPart = Lplr.Character:FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart then
+            local targetCFrame = closestPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame
+            local tweenInfo = TweenInfo.new(1)
+            local tween = TWS:Create(humanoidRootPart, tweenInfo, {CFrame = targetCFrame})
+            tween:Play()
+        end
+    end
+end
+
+
+local function ExecuteRemote()
+local Dao = GetSword()
+local args = {
+    [1] = "dash",
+    [2] = {
+        ["direction"] = LookVector,
+        ["weapon"] = Dao.tool,
+        ["origin"] = humanoidRootPart.Position
+    }
+}
+game:GetService("ReplicatedStorage"):FindFirstChild("events-@easy-games/game-core:shared/game-core-networking@getEvents.Events").useAbility:FireServer(unpack(args))
+end
+
 
 function IsPlayerAlive(Plr)
 Plr = Plr or Lplr
@@ -286,7 +584,6 @@ local isLplrAlive = IsPlayerAlive(Lplr)
 function GetMatchState()
 	return ClientHandlerStore:getState().Game.matchState
 end
-
 
 local OrigC0 = game:GetService("ReplicatedStorage").Assets.Viewmodel.RightHand.RightWrist.C0
 local Animations = {
@@ -367,7 +664,78 @@ local Antivoid = CreateToggle({
   LoadFromFile = "Settings.json"
 })
 
+local DeathDelay = 3.85--\\Magic number:)
+local PlayerTp = CreateButton({
+    Name = "PlayerTp",
+    Column = 2,
+    Parent = WorldTab,
+    Callback = function()
+    KillPlayer()
+    CreateNotification({
+    Text = "Killed Player, Teleporting...",
+    TextPos = UDim2.new(0, 140, 0, 30),
+    Time = 2.5,
+    Mode = "Normal"
+})
+wait(DeathDelay)--\\Wait is a bit better here
+TpToPlayer()
+    end
+})
 
+
+
+
+local PlayerTp = CreateButton({
+    Name = "BedTp",
+    Column = 3,
+    Parent = WorldTab,
+    Callback = function()
+    KillPlayer()
+    CreateNotification({
+    Text = "Killed Player, Teleporting...",
+    TextPos = UDim2.new(0, 140, 0, 30),
+    Time = 2.5,
+    Mode = "Normal"
+})
+wait(DeathDelay)
+TpToBed()
+
+    end
+})
+
+local YuziTpEnabled = false
+local YuziTp = CreateToggle({
+    Name = "YuziTp",
+    Column = 4,
+    Parent = WorldTab,
+    Callback = function(isToggled)
+   YuziTpEnabled = isToggled
+   if YuziTpEnabled then
+local YuziTpButton = Instance.new("TextButton")
+YuziTpButton.Size = UDim2.new(0, 50, 0, 50) 
+YuziTpButton.Position = UDim2.new(1, -75, 0.5, -25)
+YuziTpButton.AnchorPoint = Vector2.new(1, 0.5)
+YuziTpButton.BackgroundColor3 = Color3.new(0, 0, 0)
+YuziTpButton.BackgroundTransparency = 0.6 
+YuziTpButton.BorderSizePixel = 0 
+YuziTpButton.Text = "YuziTp" 
+YuziTpButton.TextColor3 = Color3.new(1, 1, 1)
+YuziTpButton.Parent = NovaWare2
+
+local CircleMakerLol = Instance.new("UICorner")
+CircleMakerLol.CornerRadius = UDim.new(1, 0) 
+CircleMakerLol.Parent = YuziTpButton
+
+YuziTpButton.MouseButton1Click:Connect(function()
+wait(1)
+ExecuteRemote()
+YuziTp()
+end)
+end
+    end,
+    SaveToFile = "Settings.json",
+  LoadFromFile = "Settings.json"
+})
 
 
 
@@ -434,7 +802,7 @@ local Esp = CreateToggle({
     end)
 
     Players.PlayerRemoving:Connect(function(player)
-        local billboard = player.Character:FindFirstChild("PlayerBillboard")
+        local billboard = player.Character:FindFirstChild("BillboardGui")
         if billboard then
             billboard:Destroy()
         end
@@ -462,7 +830,7 @@ local NameTags = CreateToggle({
             TextLabel.BackgroundTransparency = 1
             TextLabel.Text = player.Name
             TextLabel.Font = Enum.Font.SourceSansBold
-            TextLabel.TextColor3 = Color3.new(1, 1, 1) -- Corrected line
+            TextLabel.TextColor3 = Color3.new(1, 1, 1)
             TextLabel.TextStrokeTransparency = 0
             TextLabel.TextStrokeColor3 = Color3.new(0, 0, 0) 
             TextLabel.TextScaled = true
@@ -630,6 +998,9 @@ end
 
 
 
+
+
+
 --\\Combat Toggles
 --\\Credits:GodClucther for killaura
 local KillauraEnabled = false
@@ -658,7 +1029,7 @@ for _, enemyPlayer in pairs(game:GetService("Players"):GetPlayers()) do
                             if KillauraEnabled then
                                 KillauraEnabled = false
                                 for _, animationStep in pairs(Animations[CurrentAnimation["Value"]]) do
-                                    game:GetService("TS"):Create(Camera.Viewmodel.RightHand.RightWrist, TweenInfo.new(animationStep.Time), {C0 = OrigC0 * animationStep.CFrame}):Play()
+                                    game:GetService("TweenService"):Create(Camera.Viewmodel.RightHand.RightWrist, TweenInfo.new(animationStep.Time), {C0 = OrigC0 * animationStep.CFrame}):Play()
                                     task.wait(animationStep.Time - 0.01)
                                 end
                                 KillauraEnabled = true
@@ -829,3 +1200,4 @@ end)
 
 
 
+ 
