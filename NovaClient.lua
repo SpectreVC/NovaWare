@@ -381,7 +381,7 @@ end
 local TabToggle = CreateTabToggle()
 
 local WelcomeNotification = CreateNotification({
-    Text = "NovaWare Loaded!",
+    Text = "Revolbe Loaded!",
     TextPos = UDim2.new(0, 80, 0, 30),
     Time = 2.5,
     Mode = "Normal"
