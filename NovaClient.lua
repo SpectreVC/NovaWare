@@ -305,7 +305,7 @@ local function CreateTabToggle()
     tabToggle.Size = UDim2.new(0, 50, 0, 50)
     tabToggle.Position = UDim2.new(1, -60, 0.5, -25) 
     tabToggle.AnchorPoint = Vector2.new(1, 0.5) 
-    tabToggle.Text = "NV"
+    tabToggle.Text = "RV"
     tabToggle.Font = Enum.Font.SourceSansBold
     tabToggle.FontSize = Enum.FontSize.Size14
     tabToggle.TextColor3 = Color3.new(1, 1, 1)
@@ -381,7 +381,7 @@ end
 local TabToggle = CreateTabToggle()
 
 local WelcomeNotification = CreateNotification({
-    Text = "Revolbe Loaded!",
+    Text = "Revolve Loaded!",
     TextPos = UDim2.new(0, 80, 0, 30),
     Time = 2.5,
     Mode = "Normal"
